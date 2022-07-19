@@ -1,5 +1,3 @@
-install.packages('seqinr')
-library('seqinr')
 
 #Using https://www.bioinformatics.org/sms2/random_dna.html website as DNA generator
 
@@ -41,8 +39,7 @@ nucleo_prob_matrix=function(data_dna){
   
   for(j in 1:length(nucleotides))
     for(i in 1:length(nucleotides)){
-      
-      nucleo_matrix[i,j]=proportion(data_dna,nucleotides[j],nucleotides[i])
+      nucleo_matrix[j,i]=proportion(data_dna,nucleotides[j],nucleotides[i])
     }
   
      
