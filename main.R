@@ -48,6 +48,10 @@ return(nucleo_matrix)
     
 }
 
+#-------Among of functions that returns the stationary distribution  dna´s markov chain
+
+
+
 nucleo_prob_matrix(DNA)
 
 

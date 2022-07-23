@@ -1,0 +1,107 @@
+---
+title: "DNA`S Markov Chain"
+author: "Gustavo Almeida Silva"
+date: "19/07/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+#Using https://www.bioinformatics.org/sms2/random_dna.html website as DNA generator
+
+DNA=c("ccctatagtctatagcttctcgtctatagttaagattcgtacgcatctggagtgttggcggacggagctaggaatgaagtacaaggcttgctttctatccatcaatcggagcggcgcagggtgtatcgtgaggcagcaaacttttgattcggacattgtcaacatctccgctacactctccatattaacatccgcaatcaacgccgtccaatagaacgcagtcttctgggccttgtattttttgtcaggccgttatcgactgcaggtttcgtattgccatacagaatctggagcgtgatctttagattgcgtcattagagagtcagctcgatatgtaagccttgcgttggcgagcgatacccggcagggcctaatcagtcggtagttgtcctgctattgccttaagccggatagttttacgcgtaccgtaaagtgcctgctgtaaacaccacaagttatcattttaccatctaaaggtccccttggttcaaaagctcacagtactctaatacttgctctaggcccaggaaatctccagtgatccatggatcggttaaattcctgtgtttcttcatgagaggacacccaatatggacgaattacattgtgttgcccgtatggatgatgcccgatataacgccgaagcaggggtgcgggctaggacggaaagatcctgggatgcaaatttttcggagctggccttaaggaaaccacgccgtgtctgaagaaggcctatatgtgttctcgtcttcgcgagaatgaccagacagtggtcgagcctcggccgtgactgcagctatagccggattgagcgtccaaaggtgcctcggtatgggattaggaggaatcgaaaatggaatctcgggaaagaatacgcgtgcccctgctttccatattgagacgctgtcccaactaattcttgacagcacggcagcttagattatggggctcttcatagtccatcgttacgattctatatgaagctggatagatcgttcta")
+DNA=strsplit(DNA, split = "")
+DNA=DNA[[1]]
+
+
+
+```
+
+```{r}
+
+## ---------------Among of function that returns the proportion of the nucleotides---------
+
+#1
+proportion=function(data_dna,word1,word2){
+  counts=0
+  total=0
+  
+  
+  for(i in 1:(length(data_dna)-1)){
+    if(data_dna[i]==word1)
+      {
+      total=total+1
+    if(data_dna[i+1]==word2)
+      counts=counts+1 
+    }
+  }
+  return(counts/total)
+}
+
+
+#2
+##The factors levels are organize by the alphabetic sequence
+nucleo_finder=function(data_dna){
+  data_dna=levels(factor(data_dna))
+  return(data_dna)
+}
+
+#3 final
+nucleo_prob_matrix=function(data_dna){
+  nucleotides=nucleo_finder(data_dna)
+  nucleo_matrix=matrix(rep(0,length(nucleotides)**2),byrow = T,nrow=4)
+  
+  for(j in 1:length(nucleotides))
+    for(i in 1:length(nucleotides)){
+      nucleo_matrix[j,i]=proportion(data_dna,nucleotides[j],nucleotides[i])
+    }
+  
+     
+return(nucleo_matrix)
+     
+    
+}
+
+#-------Among of functions that returns the stationary distribution  dna´s markov chain (Solving via eigendecomposition)
+stationary <- function(transition) {
+  stopifnot(is.matrix(transition) &&
+        nrow(transition)==ncol(transition) &&
+            all(transition>=0 & transition<=1))
+  p <- diag(nrow(transition)) - transition
+  A <- rbind(t(p),
+         rep(1, ncol(transition)))
+  b <- c(rep(0, nrow(transition)),
+         1)
+  res <- qr.solve(A, b)
+  names(res) <- paste0("state.", 1:nrow(transition))
+  return(res)
+}
+
+##Transition probability matrix
+nucleo_prob_matrix(DNA)
+
+##Stationary states
+stationary(nucleo_prob_matrix(DNA))
+
+
+
+
+
+
+
+
+
+
+```
+
+## Simulation of the markov chain. Checking the stationary states
+
+```{r}
+
+
+```
+
