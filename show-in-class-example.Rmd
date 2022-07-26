@@ -1,5 +1,5 @@
 ---
-title: "DNA`S Markov Chain"
+title: "Modelagem do sequenciamento genético a partir de uma cadeia de Markov"
 author: "Gustavo Almeida Silva"
 date: "19/07/2022"
 output: html_document
@@ -8,8 +8,33 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+## Parte 1: Cadeia de Markov, aplicação no sequenciamento genetico
+A cadeia de Markov é um processo estocástcio que busca estimar probabibilidades de transição entre estados, e que tem como sua sua pricial propriedade a chamada memoria Markoviana. Para calcularmos tais transições temos a chamda matriz de transição de probabilidade, onde essa indica a probabilidade de transsição entre cada estado do processo.
+Essa matriz possuir propriedades importantíssima, onde utilizaremos delas nesse estudo
+* Propriedade da memoria Markoviana
+   + Diz respeito à estrutura condicional do processo, dado que estamos em um tempo $T_k$, a probabilidade de transição entre os estados do processo depende apenas do que ocorreu em $T_{k-1}$
+   
+* Equação de Chapman-Komolgorov
+  + Com uma matriz de transição, sabemos as probabilidades de transição no tempo $T_k$, porem atraves da equaçaõ de Chapman-Komolgorov, podemos estimar a matriz de transição em qualquer $T_{k+x}$
+  
+* Probabilidade limites
+  + Como consequencia direta da equação de Chapman-Komolgorov, se deserjamos estimar a matriz em um $\lim_{x \to \infty} T_{k+x}$, estaremos estimando as probabilidades limites da matriz, onde cada coluna possui um valor de convergencia igual
+  
+Cadeias de Markov possuem um amplo campo utilização, e nesse estudo buscaremos estimar as probabilidades de transição em uma seqeuncia genetica. Para isso, dado uma amostra de DNA, iremos estimar sua matriz de probabilidade e suas probabilidades limites. Como curiosidade, iremos observar qual distribuiçao cada estado segue, com amostrar obitdas atraves de uma simulação de uma simulação MOnte Carlo
+
+## Parte 2: Obtenção dos dados e desenvolvimento das funçoes
+O processo de Poisson é um processo de contagem, ou seja, quantificar quantas observações foram registradas em algum determinado espaço de tempo. 
+Esse processo possui propriedades importantíssimas, onde a função desenvolvida neste trabalho para simular um Processo de Poisson, se utiliza delas:
+
+* Propriedade de falta de memória
+   + Diz respeito à estrutura condicional do processo, onde a probabilidade de ocorrer alguma observação entre os tempos $T_1$ e $T_2$ é independente do número de observações registradas entre $T_0$ e $T_1$
+   
+* Propriedade do Tempo de Chegada: distribuição e independência
+  + O intervalo de tempo entre a chegada de 2 observações seguem uma distribuição Exponencial, onde por conta do processo possuir a propriedade de falta de memória, esses $T_i$ são IID. Assim, a soma de tempos de chegada segue uma Gama
+ 
 
 
+ Com essas propriedades em mãos, pode-se desenvolver uma função que simula um Processo de Poisson, onde dado um lambda (taxa de chegada por tempo), estima-se o tempo de chegada entre as observações durante n passos(comprimento da simulação)
 ```{r}
 #Using https://www.bioinformatics.org/sms2/random_dna.html website as DNA generator
 
@@ -101,6 +126,62 @@ stationary(nucleo_prob_matrix(DNA))
 ## Simulation of the markov chain. Checking the stationary states
 
 ```{r}
+
+dna_manipulation=function(DNA){
+  DNA=strsplit(DNA, split = "")
+  DNA=DNA[[1]]
+}
+
+database_dna=
+      list('tcaggaattcgcctgccagggtactatgcctccctagaaaatacgagacgttgctaatagtatgttgtaaatgctgcgagtgctagttcgaatattaacacacgtatctcttggagcgcttaggtgggagtgggtggcgtgtagacagtgccttcaggtagattggtaccttttcctatattcacgtagtgggggtgctttcagctaatccgctatcgctatcgtggctatgcgtggttggcgattcggatgtgaccatgctgccagggtcgataggtagccattcgactgtccctcgatactccggtcgattcctaacgtagtacgtaagaaagtgctactggatatctccggtagctaggatggtccgagcccgaattagaatttaaaagcggtgtggagataatggcctcaggccaacccaggcgttggtgggacctgttgcagtcgggaaatgacgacgatagaaacaacacgatcactttgtcgcggccgtccatgttcgccccaggcattgggagtaagaccagtctgttctcgtttatttagcgtactctgccgccttaacaacctatggtaatttggccatgggatatcagcctgattaagtatcaatccccgcaggctgacgatatactgttggtctagcattatgtaatttggcttaatggagcgcttagctcccatggcggaatgacgaggctagtgtttcacgtatccgtcctacggatccccctacttgcgtacacccacggacgccgtaagaggtcggtacacatcattaggggcctctgccacccctaactctgagaaggtacttaaagtatacaaataatttatattgcctaagtgggcactccacatttgccccagtaacttgtagcgcagttacgtggaaacgtaaactgatgggttaccttatttaaacatagtttttggagactccactactccggccatcatatccgggtaggttgcccgctggcactgccggtataga','tcaggaattcgcctgccagggtactatgcctccctagaaaatacgagacgttgctaatagtatgttgtaaatgctgcgagtgctagttcgaatattaacacacgtatctcttggagcgcttaggtgggagtgggtggcgtgtagacagtgccttcaggtagattggtaccttttcctatattcacgtagtgggggtgctttcagctaatccgctatcgctatcgtggctatgcgtggttggcgattcggatgtgaccatgctgccagggtcgataggtagccattcgactgtccctcgatactccggtcgattcctaacgtagtacgtaagaaagtgctactggatatctccggtagctaggatggtccgagcccgaattagaatttaaaagcggtgtggagataatggcctcaggccaacccaggcgttggtgggacctgttgcagtcgggaaatgacgacgatagaaacaacacgatcactttgtcgcggccgtccatgttcgccccaggcattgggagtaagaccagtctgttctcgtttatttagcgtactctgccgccttaacaacctatggtaatttggccatgggatatcagcctgattaagtatcaatccccgcaggctgacgatatactgttggtctagcattatgtaatttggcttaatggagcgcttagctcccatggcggaatgacgaggctagtgtttcacgtatccgtcctacggatccccctacttgcgtacacccacggacgccgtaagaggtcggtacacatcattaggggcctctgccacccctaactctgagaaggtacttaaagtatacaaataatttatattgcctaagtgggcactccacatttgccccagtaacttgtagcgcagttacgtggaaacgtaaactgatgggttaccttatttaaacatagtttttggagactccactactccggccatcatatccgggtaggttgcccgctggcactgccggtataga','cttcactgatactggacggagtatgaaccattttccacgggacagccgcttaataatttgaatgccctttctatacacggtcccgaacaccatgcacctgcagttacagctgccgttctttttcaattgcacttcgtgacaagtcgtaagactactaagctatctttgtgagtggtaaacgatcgacccgcggggagcgcactcgcccgaaatttccctcgttatgtactgggtaaatagccggaaaactgcccatggcccctgacggcagctgctccaatgccctatgagcacctccgttgttgaatagtattcttgcaagagttcgaaactgttcgattttagtccgtggaataaccaagattagtgcttgatcattcgtctgcggacatctacgacgaatccctagtttgaggactggacgtcctacccgaatattacttaagtcctcagaagaacttgaggtccgatcagattagtcagatgacaccgagttcctctcacgtgcgtaatacactccttatggccgataaccctttaaatccgagagcgtagaggaagctgaatgatccaggtggggtcgggtgagcatgcggcagatctctatgtactttgtttcgagaacagtgcaagactggaactcctagttctaatatgtaaagcctagttctggacccgcctgaggtgggcatatggtccgtccaaaccatgtaatttctgcctattgcggcgccagaagttcacccgttaggcccatacccacccttctgcacgccaaataattcccgcaaaagaaacagctcacgacgcctacagaagaagcgagggggtgccgccacacttatgtgacgacttaaccggacaggcaaccttccgtcgacacaaggccacacgatacattaatctattcccgacgactctgaatgccggcgtcccgcttgttacgaaattagccaggatgggggtagactagcctcttgttccgggggtcagacgcgct','atcaatgggtggcggtggcggcaacggttggaccaaaagggtcaggggcgggggcaaatctagctgtccagttccagacgaacgcagcgctttagaaattacccagaaaattagcgttcagcgtacgcggttcgccactagcgaattttccggccgaggtcacccggtcacttggaacttttttcgagccctgggccgccgttatgatgcgaagccatcaatcctggagcctgtagagtcccgaatgcaggttcccatattccgtcacccaactcaggtaggtactaatctggctcgtttattgccagattgagtgaagactcctttacgccgtacggattcagctgaagtatataaaccgcttcgttagataagagacgcaacttcttccctgcgctccggggcggttgtttggatgtgcttgaacgcacaccatcatctcgacagcgcactcggaactctcccgagtgtatgtttctcgcccaggctcccagggagggcatgttctggatacataaaactaccgaatgctggcaggagcgccccacattagaagcgacatgctcagaacagcgggcccgaacccgatcagtgcgcgaggccactttctgtggcaattaaggggcggtttgctctcgcctgcacatcgggacgtctcccggatagatccactcctttccagactacagaacgcactcagtacatgatagacactatctcgttgaccggttttcttgtggagtctctgaatagaccttacctgttaaaatgacacgcggcaattgcgcccttgcgggcaatatgacgcgtgtgttgctaaacctcgtagggaagttcaacgtgccttggtcatgcataacacctaaccacaatcctctaaccattgttaatgatgaatgcggagtcgctgtggcccaactgacagataggcggtgcttcccgaacggaacgatccgcgtgctactcccggggaatcgttcaattccggtggattacttcg')
+
+# dna_simulation=function(database_dna){
+    
+    database_dna=lapply(database_dna,dna_manipulation)
+    
+    for(k in 1:500){
+        teste=vector()
+        i=1
+        while(length(teste)<=1000){
+          if(i>3+k)
+                i=1
+          random=runif(1,min=1,max=1000)
+          teste=c(teste,database_dna[[i]][random])
+          i=i+1
+        }
+    
+      teste=list(teste)
+      database_dna=c(database_dna,teste)
+    }
+  
+# }
+
+
+
+
+
+
+
+database_dna=lapply(database_dna,nucleo_prob_matrix)
+database_dna=lapply(database_dna,stationary)
+
+state1=sapply(1:length(database_dna),function(i)database_dna[[i]][1])
+state2=sapply(1:length(database_dna),function(i)database_dna[[i]][2])
+state3=sapply(1:length(database_dna),function(i)database_dna[[i]][3])
+state4=sapply(1:length(database_dna),function(i)database_dna[[i]][4])
+
+par(mfrow=c(2,2))
+hist(state1,freq=F,ylab="",yaxt="n")
+hist(state2,freq=F,ylab="",yaxt="n")
+hist(state3,freq=F,ylab="",yaxt="n")
+hist(state4,freq=F,ylab="",yaxt="n")
+
+
+
+
+
+
+
 
 
 ```
