@@ -1,0 +1,211 @@
+---
+title: "Modelagem do sequenciamento genético a partir de uma cadeia de Markov"
+author: "Gustavo Almeida Silva"
+output: 
+  html_document:
+    theme: united
+    toc: true
+    toc_float:
+      collapsed: true
+      smooth_scroll: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Parte 1: Cadeia de Markov, aplicação no sequenciamento genético
+A cadeia de Markov é um processo estocástico que busca estimar probabilidades de transição entre estados, e que tem como sua principal propriedade a chamada memória Markoviana. Para calcularmos tais transições temos a chamada matriz de transição de probabilidade, onde essa indica a probabilidade de transição entre cada estado do processo.
+Essa matriz possui propriedades importantíssima, onde utilizaremos delas nesse estudo
+* Propriedade da memória Markoviana
+   + Diz respeito à estrutura condicional do processo, dado que estamos em um tempo $T_k$, a probabilidade de transição entre os estados do processo depende apenas do que ocorreu em $T_{k-1}$
+   
+* Equação de Chapman-Kolmogorov
+  + Com uma matriz de transição, sabemos as probabilidades de transição no tempo $T_k$, porém através da equação de Chapman-Kolmogorov, podemos estimar a matriz de transição em qualquer $T_{k+x}$
+  
+* Probabilidade limites
+  + Como consequência direta da equação de Chapman-Kolmogorov, se desejamos estimar a matriz em um $\lim_{x \to \infty} T_{k+x}$, estaremos estimando as probabilidades limites da matriz, onde cada coluna possui um valor de convergência igual
+  
+As cadeias de Markov possuem um amplo campo de utilização, e nesse estudo buscaremos estimar as probabilidades de transição em uma sequência genética. Para isso, dado uma amostra de DNA, iremos estimar sua matriz de probabilidade e suas probabilidades limites. Como curiosidade, iremos observar qual distribuição cada estado segue, com amostras obtidas através de uma simulação de uma simulação Monte Carlo
+
+## Parte 2: Obtenção dos dados e desenvolvimento das funções
+Para a geração dos DNAs, foi utilizado primeiramente o website https://www.bioinformatics.org/sms2/random_dna.html, onde é possível especificar o tamanho amostral desejado. Para o trabalho escolhemos um tamanho genético de 1000 nucleotídeos.
+
+Com as propriedades enunciadas acima, foi possível desenvolver uma função que calcula a matriz de probabilidade de transição e suas probabilidades limites
+
+```{r}
+#Using https://www.bioinformatics.org/sms2/random_dna.html website as DNA generator
+
+DNA=c("ccctatagtctatagcttctcgtctatagttaagattcgtacgcatctggagtgttggcggacggagctaggaatgaagtacaaggcttgctttctatccatcaatcggagcggcgcagggtgtatcgtgaggcagcaaacttttgattcggacattgtcaacatctccgctacactctccatattaacatccgcaatcaacgccgtccaatagaacgcagtcttctgggccttgtattttttgtcaggccgttatcgactgcaggtttcgtattgccatacagaatctggagcgtgatctttagattgcgtcattagagagtcagctcgatatgtaagccttgcgttggcgagcgatacccggcagggcctaatcagtcggtagttgtcctgctattgccttaagccggatagttttacgcgtaccgtaaagtgcctgctgtaaacaccacaagttatcattttaccatctaaaggtccccttggttcaaaagctcacagtactctaatacttgctctaggcccaggaaatctccagtgatccatggatcggttaaattcctgtgtttcttcatgagaggacacccaatatggacgaattacattgtgttgcccgtatggatgatgcccgatataacgccgaagcaggggtgcgggctaggacggaaagatcctgggatgcaaatttttcggagctggccttaaggaaaccacgccgtgtctgaagaaggcctatatgtgttctcgtcttcgcgagaatgaccagacagtggtcgagcctcggccgtgactgcagctatagccggattgagcgtccaaaggtgcctcggtatgggattaggaggaatcgaaaatggaatctcgggaaagaatacgcgtgcccctgctttccatattgagacgctgtcccaactaattcttgacagcacggcagcttagattatggggctcttcatagtccatcgttacgattctatatgaagctggatagatcgttcta")
+DNA=strsplit(DNA, split = "")
+DNA=DNA[[1]]
+
+
+
+```
+
+
+### Passo 1 - Encontrando os estados
+
+A primeira função a ser definida é a chamada **nucleo_finder**, que irá encontrar os estados do parametro dado, onde esse parametro deve ser um dado categórico
+
+```{r}
+#1
+##The factors levels are organize by the alphabetic sequence
+nucleo_finder=function(data_dna){
+  data_dna=levels(factor(data_dna))
+  return(data_dna)
+}
+```
+
+### Passo 2 - Proporção
+
+A segunda função a ser definida é a chamada **proportion**, que irá calcular a probabilidade de transição de cada nucleotídeo.
+
+```{r}
+#2
+proportion=function(data_dna,word1,word2){
+  counts=0
+  total=0
+  
+  
+  for(i in 1:(length(data_dna)-1)){
+    if(data_dna[i]==word1)
+      {
+      total=total+1
+    if(data_dna[i+1]==word2)
+      counts=counts+1 
+    }
+  }
+  return(counts/total)
+}
+
+
+```
+
+### Passo 3 - Matriz de transição
+
+A terceira função a ser definida é a chamada **nucleo_prob_matrix** , que irá utilizar das outras 2 funções definidas(**nucleo_finder**,**proportion**) para calcular a matriz de transição de probabilidades
+
+```{r}
+#3 final
+nucleo_prob_matrix=function(data_dna){
+  nucleotides=nucleo_finder(data_dna)
+  nucleo_matrix=matrix(rep(0,length(nucleotides)**2),byrow = T,nrow=4)
+  
+  for(j in 1:length(nucleotides))
+    for(i in 1:length(nucleotides)){
+      nucleo_matrix[j,i]=proportion(data_dna,nucleotides[j],nucleotides[i])
+    }
+  
+     
+return(nucleo_matrix)
+     
+    
+}
+
+```
+
+### Matriz calculada
+
+Utilizando as funções desenvolvidas para calcular a matriz de transição da sequência genética definida 
+```{r}
+##Transition probability matrix
+nucleo_prob_matrix(DNA)
+
+```
+
+
+Com a matriz de transição calculada, pode-se calcular o vetor de probabilidade limites. Para isso foi desenvolvida a função **stationary**, que utiliza autodecomposição de uma matriz em seus autovalores e autovetores para otimizar o calculo de sua probabilidade limite
+
+```{r}
+#-------Among of functions that returns the stationary distribution  dna´s markov chain (Solving via eigendecomposition)
+stationary <- function(transition) {
+  stopifnot(is.matrix(transition) &&
+        nrow(transition)==ncol(transition) &&
+            all(transition>=0 & transition<=1))
+  p <- diag(nrow(transition)) - transition
+  A <- rbind(t(p),
+         rep(1, ncol(transition)))
+  b <- c(rep(0, nrow(transition)),
+         1)
+  res <- qr.solve(A, b)
+  names(res) <- paste0("state.", 1:nrow(transition))
+  return(res)
+}
+```
+
+A matriz de DNA apresentou as seguintes probabilidades limites:
+```{r}
+
+##Stationary states
+stationary(nucleo_prob_matrix(DNA))
+
+```
+
+Assim, vemos que estamos trabalhando com uma matriz aproximadamente duplamente estocastica, onde a probabilidade limite para cada estado é dado por $1/N\text{, onde N é o número de estados}$
+
+## Geração de sequencias geneticas e a distribuição das probabilidades limites 
+
+Apesar o website utilizado para a geração de amostras ser uma ótima ferrmanta uma rápida analise, ela não possui em sua finalidade construir uma grande base de dados. Assim, buscando entender a distribuição das probabilidades limites, foi elaborada uma função iterativa para geração de sequencia geneticas. 
+
+Utilizando uma base de 4 amostras geneticas retiradas do site (chamaremos esse conjunto de base primaria), a função constroi uma nova base genetica escolhendo nucleotídeos com probabilidade p estimada da base primaria e aloca essa nova base como uma base primaria. Assim, a cada interação, a base primaria onde a função escolhe aleatoriamente cada nucleotidio aumenta.
+```{r}
+#Primary base, selected 4 DNA bases
+
+
+dna_manipulation=function(DNA){
+  DNA=strsplit(DNA, split = "")
+  DNA=DNA[[1]]
+}
+
+database_dna=
+      list('tcaggaattcgcctgccagggtactatgcctccctagaaaatacgagacgttgctaatagtatgttgtaaatgctgcgagtgctagttcgaatattaacacacgtatctcttggagcgcttaggtgggagtgggtggcgtgtagacagtgccttcaggtagattggtaccttttcctatattcacgtagtgggggtgctttcagctaatccgctatcgctatcgtggctatgcgtggttggcgattcggatgtgaccatgctgccagggtcgataggtagccattcgactgtccctcgatactccggtcgattcctaacgtagtacgtaagaaagtgctactggatatctccggtagctaggatggtccgagcccgaattagaatttaaaagcggtgtggagataatggcctcaggccaacccaggcgttggtgggacctgttgcagtcgggaaatgacgacgatagaaacaacacgatcactttgtcgcggccgtccatgttcgccccaggcattgggagtaagaccagtctgttctcgtttatttagcgtactctgccgccttaacaacctatggtaatttggccatgggatatcagcctgattaagtatcaatccccgcaggctgacgatatactgttggtctagcattatgtaatttggcttaatggagcgcttagctcccatggcggaatgacgaggctagtgtttcacgtatccgtcctacggatccccctacttgcgtacacccacggacgccgtaagaggtcggtacacatcattaggggcctctgccacccctaactctgagaaggtacttaaagtatacaaataatttatattgcctaagtgggcactccacatttgccccagtaacttgtagcgcagttacgtggaaacgtaaactgatgggttaccttatttaaacatagtttttggagactccactactccggccatcatatccgggtaggttgcccgctggcactgccggtataga','tcaggaattcgcctgccagggtactatgcctccctagaaaatacgagacgttgctaatagtatgttgtaaatgctgcgagtgctagttcgaatattaacacacgtatctcttggagcgcttaggtgggagtgggtggcgtgtagacagtgccttcaggtagattggtaccttttcctatattcacgtagtgggggtgctttcagctaatccgctatcgctatcgtggctatgcgtggttggcgattcggatgtgaccatgctgccagggtcgataggtagccattcgactgtccctcgatactccggtcgattcctaacgtagtacgtaagaaagtgctactggatatctccggtagctaggatggtccgagcccgaattagaatttaaaagcggtgtggagataatggcctcaggccaacccaggcgttggtgggacctgttgcagtcgggaaatgacgacgatagaaacaacacgatcactttgtcgcggccgtccatgttcgccccaggcattgggagtaagaccagtctgttctcgtttatttagcgtactctgccgccttaacaacctatggtaatttggccatgggatatcagcctgattaagtatcaatccccgcaggctgacgatatactgttggtctagcattatgtaatttggcttaatggagcgcttagctcccatggcggaatgacgaggctagtgtttcacgtatccgtcctacggatccccctacttgcgtacacccacggacgccgtaagaggtcggtacacatcattaggggcctctgccacccctaactctgagaaggtacttaaagtatacaaataatttatattgcctaagtgggcactccacatttgccccagtaacttgtagcgcagttacgtggaaacgtaaactgatgggttaccttatttaaacatagtttttggagactccactactccggccatcatatccgggtaggttgcccgctggcactgccggtataga','cttcactgatactggacggagtatgaaccattttccacgggacagccgcttaataatttgaatgccctttctatacacggtcccgaacaccatgcacctgcagttacagctgccgttctttttcaattgcacttcgtgacaagtcgtaagactactaagctatctttgtgagtggtaaacgatcgacccgcggggagcgcactcgcccgaaatttccctcgttatgtactgggtaaatagccggaaaactgcccatggcccctgacggcagctgctccaatgccctatgagcacctccgttgttgaatagtattcttgcaagagttcgaaactgttcgattttagtccgtggaataaccaagattagtgcttgatcattcgtctgcggacatctacgacgaatccctagtttgaggactggacgtcctacccgaatattacttaagtcctcagaagaacttgaggtccgatcagattagtcagatgacaccgagttcctctcacgtgcgtaatacactccttatggccgataaccctttaaatccgagagcgtagaggaagctgaatgatccaggtggggtcgggtgagcatgcggcagatctctatgtactttgtttcgagaacagtgcaagactggaactcctagttctaatatgtaaagcctagttctggacccgcctgaggtgggcatatggtccgtccaaaccatgtaatttctgcctattgcggcgccagaagttcacccgttaggcccatacccacccttctgcacgccaaataattcccgcaaaagaaacagctcacgacgcctacagaagaagcgagggggtgccgccacacttatgtgacgacttaaccggacaggcaaccttccgtcgacacaaggccacacgatacattaatctattcccgacgactctgaatgccggcgtcccgcttgttacgaaattagccaggatgggggtagactagcctcttgttccgggggtcagacgcgct','atcaatgggtggcggtggcggcaacggttggaccaaaagggtcaggggcgggggcaaatctagctgtccagttccagacgaacgcagcgctttagaaattacccagaaaattagcgttcagcgtacgcggttcgccactagcgaattttccggccgaggtcacccggtcacttggaacttttttcgagccctgggccgccgttatgatgcgaagccatcaatcctggagcctgtagagtcccgaatgcaggttcccatattccgtcacccaactcaggtaggtactaatctggctcgtttattgccagattgagtgaagactcctttacgccgtacggattcagctgaagtatataaaccgcttcgttagataagagacgcaacttcttccctgcgctccggggcggttgtttggatgtgcttgaacgcacaccatcatctcgacagcgcactcggaactctcccgagtgtatgtttctcgcccaggctcccagggagggcatgttctggatacataaaactaccgaatgctggcaggagcgccccacattagaagcgacatgctcagaacagcgggcccgaacccgatcagtgcgcgaggccactttctgtggcaattaaggggcggtttgctctcgcctgcacatcgggacgtctcccggatagatccactcctttccagactacagaacgcactcagtacatgatagacactatctcgttgaccggttttcttgtggagtctctgaatagaccttacctgttaaaatgacacgcggcaattgcgcccttgcgggcaatatgacgcgtgtgttgctaaacctcgtagggaagttcaacgtgccttggtcatgcataacacctaaccacaatcctctaaccattgttaatgatgaatgcggagtcgctgtggcccaactgacagataggcggtgcttcccgaacggaacgatccgcgtgctactcccggggaatcgttcaattccggtggattacttcg')
+
+# dna_simulation=function(database_dna){
+    
+    database_dna=lapply(database_dna,dna_manipulation)
+    
+    for(k in 1:500){
+        teste=vector()
+        i=1
+        while(length(teste)<=1000){
+          if(i>3+k)
+                i=1
+          random=runif(1,min=1,max=1000)
+          teste=c(teste,database_dna[[i]][random])
+          i=i+1
+        }
+    
+      teste=list(teste)
+      database_dna=c(database_dna,teste)
+    }
+  
+# }
+
+database_dna=lapply(database_dna,nucleo_prob_matrix)
+database_dna=lapply(database_dna,stationary)
+
+state1=sapply(1:length(database_dna),function(i)database_dna[[i]][1])
+state2=sapply(1:length(database_dna),function(i)database_dna[[i]][2])
+state3=sapply(1:length(database_dna),function(i)database_dna[[i]][3])
+state4=sapply(1:length(database_dna),function(i)database_dna[[i]][4])
+
+
+```
+
+Com um número grande de amostras de DNAs geradas, foi possível calcular a matriz de transição de cada sequencia genética e assim calcular as probabilidades limites
+
+Construimos um histogramas com essas probabilidades limites estimadas
+```{r}
+par(mfrow=c(2,2))
+hist(state1,freq=F,ylab="",yaxt="n",col='#FC5F00',main='Probs Limite nucleo A')
+hist(state2,freq=F,ylab="",yaxt="n",col='#FD843A',main='Probs Limite nucleo C')
+hist(state3,freq=F,ylab="",yaxt="n",col='#FEA976',main='Probs Limite nucleo G')
+hist(state4,freq=F,ylab="",yaxt="n",col='#FBC8AA',main='Probs Limite nucleo T')
+
+```
+
+Os histogramas sugerem que as probabilidades limites de sequencias genéticas podem ser analisadas por modelos que seguem normalidade.
+Essa sugestão pode ser utilizada em trabalhos futuros que buscam encontrar irregularidades geneticas
+
+
