@@ -1,0 +1,98 @@
+---
+title: "Baysiana"
+author: "Gustavo Almeida Silva"
+date: "12/01/2023"
+output: html_document
+---
+
+# 6.2 COMPARAÇÃO DE DUAS POPULAÇÕES NORMAIS, AMOSTRAS INDEPENDENTES
+
+```{r}
+M1<-rt(10000,df=29)*0.9376+131.37
+M2<-rt(10000,df=29)*0.9769+136.17
+D<-M2-M1
+hist(D,breaks=100)
+c(sort(D)[250],sort(D)[9750])
+```
+
+
+```{r}
+A<-c(225.8,224.6,220.4,212.3)
+B<-c(193.4,185.3,182.8,188.5,198.6)
+Sa<-var(A)
+Sb<-var(B)
+SiA<-rgamma(10000,shape=4/2,rate=(4-1)*Sa/2)^(-1)
+SiB<-rgamma(10000,shape=5/2,rate=(5-1)*Sb/2)^(-1)
+hist(SiB/SiA,breaks=100)
+sum(SiB/SiA<1)/10000
+# Comparação das Médias
+Ma<-mean(A)
+Mb<-mean(B)
+Mia<-rt(10000,df=3)*sqrt(Sa/4)+Ma
+Mib<-rt(10000,df=4)*sqrt(Sb/5)+Mb
+D<-Mib-Mia
+hist(D,breaks=100)
+```
+
+
+
+```{r}
+T1<-rbeta(10000,shape1=4.5,shape2=6.5)
+T2<- rbeta(10000,shape1=4.5,shape2=6.5)
+D<-T2/T1
+hist(D,breaks=100)
+hist(D,breaks=100,xlim=c(0,2))
+sum(D<0.5)/10000
+```
+
+
+## Aceitação Rejicao
+
+```{r}
+x=vector()
+
+acep_rej=function(FUN1,FUN2){
+  k=1
+  
+  for(i in 1:100){
+  u=runif(1)
+  y=r_FUN2
+  if(u<FUN1/M*d_FUN2){
+    x[k]=y
+    k=k+1
+  }
+  }
+  
+}
+```
+
+
+## Metroplis-hasting
+
+### Gama(2,1)
+
+```{r}
+
+metrop_hast_gama=function(alpha,beta,size){
+  x=vector()
+  x[1]=alpha/beta
+  
+  for(i in 1:size){
+    v=x[i]+rnorm(1,mean=0,sd=1)
+    u=runif(1)
+    if(u<dgamma(v,shape=alpha,rate =beta)/dgamma(x[i],shape=alpha,rate = beta)){
+      x[i+1]=v
+    }
+    else
+      x[i+1]=x[i]
+  }
+  
+  return(x)
+}
+
+
+data=metrop_hast_gama(2,1,1000)
+hist(data)
+
+```
+
