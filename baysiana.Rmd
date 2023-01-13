@@ -35,6 +35,24 @@ hist(D,breaks=100)
 ```
 
 
+```{r}
+Si1<-rgamma(10000,shape=29/2,rate=29*26.37/2)^(-1)
+Si2<-rgamma(10000,shape=29/2,rate=29*28.63/2)^(-1)
+R<-Si1/Si2
+hist(R,breaks=100)
+# Intervalo simétrico:
+Rs<-sort(R)
+c(Rs[250],Rs[9750])
+# Intervalo HPD:
+T<-rep(0,500)
+for (k in 1:500) {
+T[k]<-Rs[9500+k]-Rs[k]
+}
+L1<-which.min(T)
+c(Rs[L1],Rs[L1+9500])
+```
+
+
 
 ```{r}
 T1<-rbeta(10000,shape1=4.5,shape2=6.5)
@@ -94,5 +112,60 @@ metrop_hast_gama=function(alpha,beta,size){
 data=metrop_hast_gama(2,1,1000)
 hist(data)
 
+```
+
+
+## Prova
+
+##2
+
+
+```{r}
+N = 10000
+
+x = c(0.4896, 0.3856, 1.7100, 0.2115, -1.0654)
+
+fx = function(teta){
+  dgamma(teta, 4, 1/5)*prod(dt(x, df = teta))
+}
+
+fx = Vectorize(fx)
+
+gy = function(teta){
+  dunif(teta, 0, 40)
+}
+
+
+M = 0.1
+
+aceitos = c()
+faltantes = N
+while(faltantes > 0){
+  
+  Y <- runif(faltantes, min = 0.01, max = 40)
+  U <- runif(faltantes)
+  
+  x_i <- Y[U <= fx(Y)/(M*gy(Y))]
+  aceitos <- c(aceitos, x_i[!is.na(x_i)])
+  
+  faltantes <- N-length(aceitos)
+  
+}
+
+mean(aceitos)
+hist(aceitos)
+```
+
+```{r}
+XY<-matrix(0,nrow=100000,ncol=2)
+XY[1,]<-c(1,1)
+A<-1
+B<-1
+# B<-0
+for (k in 2:100000) {
+
+XY[k,1]<-rexp(1,rate=A+B*XY[k-1,2])
+XY[k,2]<- rexp(1,rate=A+B*XY[k,1])
+}
 ```
 
